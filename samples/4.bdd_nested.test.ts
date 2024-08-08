@@ -1,23 +1,14 @@
 // https://deno.land/std@0.163.0/testing/bdd_examples/user_nested_test.ts
-import {
-  assertEquals,
-  assertStrictEquals,
-  assertThrows,
-} from "https://deno.land/std@0.163.0/testing/asserts.ts";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  it,
-} from "https://deno.land/std@0.163.0/testing/bdd.ts";
-import { User } from "https://deno.land/std@0.163.0/testing/bdd_examples/user.ts";
+import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
+import { afterEach, beforeEach, describe, it, test } from "@std/testing/bdd";
+import { User } from "./bdd_example/user.ts";
 
 describe("User", () => {
   it("users initially empty", () => {
     assertEquals(User.users.size, 0);
   });
 
-  it("constructor", () => {
+  test("constructor", () => {
     try {
       const user = new User("Kyle");
       assertEquals(user.name, "Kyle");
@@ -44,7 +35,7 @@ describe("User", () => {
       assertEquals(user.getAge(), 18);
     });
 
-    it("setAge", function () {
+    test("setAge", function () {
       user.setAge(18);
       assertEquals(user.getAge(), 18);
     });

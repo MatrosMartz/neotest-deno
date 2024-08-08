@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.163.0/testing/asserts.ts";
+import { assertEquals } from "@std/assert";
 
 // Compact form: name and function
 Deno.test("hello world #1", () => {
@@ -38,6 +38,11 @@ Deno.test(
 
 // Similar to longer form, with a named test function as a second argument.
 Deno.test({ permissions: { read: true } }, function helloWorld6() {
+  const x = 1 + 2;
+  assertEquals(x, 3);
+});
+
+Deno.test.only("hello world #7", () => {
   const x = 1 + 2;
   assertEquals(x, 3);
 });

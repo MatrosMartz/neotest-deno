@@ -1,5 +1,5 @@
-import { assertEquals } from "https://deno.land/std@0.163.0/testing/asserts.ts";
-import { Client } from "https://deno.land/x/postgres@v0.15.0/mod.ts";
+import { assertEquals } from "@std/assert";
+import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
 
 interface User {
   id: number;

@@ -1,4 +1,4 @@
-import { delay } from "https://deno.land/std@0.163.0/async/delay.ts";
+import { delay } from "@std/async/delay";
 
 Deno.test("async hello world", async () => {
   const x = 1 + 2;

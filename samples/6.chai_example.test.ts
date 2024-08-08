@@ -11,7 +11,7 @@
  * @module
  */
 
-import chai from "https://cdn.skypack.dev/chai@4.3.4?dts";
+import chai from "npm:chai@5.1.1";
 
 const foo = "bar";
 const beverages = { tea: ["chai", "matcha", "oolong"] };

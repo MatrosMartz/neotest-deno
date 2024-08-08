@@ -12,8 +12,8 @@
  * @module
  */
 
-import sinon from "https://cdn.skypack.dev/sinon@11.1.2?dts";
-import chai from "https://cdn.skypack.dev/chai@4.3.4?dts";
+import sinon from "npm:sinon@9.2.4";
+import chai from "npm:chai@5.1.1";
 
 Deno.test("stubbed callback", () => {
   const callback = sinon.stub();
