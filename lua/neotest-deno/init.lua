@@ -12,12 +12,9 @@ local DenoNeotestAdapter = { name = "neotest-deno" }
 ---@param dir string @Directory to treat as cwd
 ---@return string | nil @Absolute root dir of test suite
 function DenoNeotestAdapter.root(dir)
-
 	local result = nil
-	local root_files = vim.list_extend(
-		config.get_additional_root_files(),
-		{ "deno.json", "deno.jsonc", "import_map.json" }
-	)
+	local root_files =
+		vim.list_extend(config.get_additional_root_files(), { "deno.json", "deno.jsonc", "import_map.json" })
 
 	for _, root_file in ipairs(root_files) do
 		result = lib.files.match_root_pattern(root_file)(dir)
@@ -35,11 +32,7 @@ end
 ---!param rel_path string Path to directory, relative to root
 ---!param root string Root directory of project
 function DenoNeotestAdapter.filter_dir(name)
-
-	local filter_dirs = vim.list_extend(
-		config.get_additional_filter_dirs(),
-		{ "node_modules" }
-	)
+	local filter_dirs = vim.list_extend(config.get_additional_filter_dirs(), { "node_modules" })
 
 	for _, filter_dir in ipairs(filter_dirs) do
 		if name == filter_dir then
@@ -54,7 +47,6 @@ end
 ---@param file_path string
 ---@return boolean
 function DenoNeotestAdapter.is_test_file(file_path)
-
 	-- See https://deno.land/manual@v1.27.2/basics/testing#running-tests
 	local valid_exts = {
 		js = true,
@@ -71,9 +63,9 @@ function DenoNeotestAdapter.is_test_file(file_path)
 	local file_name = string.match(file_path, ".-([^\\/]-%.?[^%.\\/]*)$")
 
 	-- filename match _ . or test.
-	local ext = string.match(file_name, "[_%.]test%.(%w+)$") or	-- Filename ends in _test.<ext> or .test.<ext>
-		string.match(file_name, "^test%.(%w+)$") or				-- Filename is test.<ext>
-		nil
+	local ext = string.match(file_name, "[_%.]test%.(%w+)$") -- Filename ends in _test.<ext> or .test.<ext>
+		or string.match(file_name, "^test%.(%w+)$") -- Filename is test.<ext>
+		or nil
 
 	if ext and valid_exts[ext] then
 		return true
@@ -87,63 +79,203 @@ end
 ---@param file_path string Absolute file path
 ---@return neotest.Tree | nil
 function DenoNeotestAdapter.discover_positions(file_path)
+	-- TODO: discover flat describe
 
-	-- TODO: discover flat tests
-	local query = [[
-;; Deno.test
-(call_expression
-	function: (member_expression) @func_name (#match? @func_name "^Deno.test$")
-	arguments: [
-		(arguments ((string) @test.name . (arrow_function)))
-		(arguments . (function name: (identifier) @test.name))
-		(arguments . (object(pair
-			key: (property_identifier) @key (#match? @key "^name$")
-			value: (string) @test.name
-		)))
-		(arguments ((string) @test.name . (object) . (arrow_function)))
-		(arguments (object) . (function name: (identifier) @test.name))
-	]
-) @test.definition
+	local deno_test = [[
+  ; -- t.step 1 --
+  ((call_expression
+    function: (member_expression property: (property_identifier) @test_step (#eq? @test_step "step"))
+    arguments: (arguments (_
+      parameters: (formal_parameters . (required_parameter pattern: (identifier) @test_id))
+      body: (statement_block
+        [
+          (expression_statement (await_expression (call_expression
+            function: [
+              (member_expression
+                object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                property: (property_identifier) @test_step (#eq? @test_step "step")
+              )
+              (member_expression
+                object:(member_expression
+                  object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                  property: (property_identifier) @test_step (#eq? @test_step "step")
+                )
+                property: (property_identifier) @test_only (#eq? @test_only "only")
+              )
+            ]
+            arguments: [
+              (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
+              (arguments . (object)? . (function_expression name: (identifier) @test.name))
+              (arguments . (object (pair
+                key: (property_identifier) @key (#eq? @key "name")
+                value: (string (string_fragment) @test.name)
+              )))
+            ]
+          )))
+          (lexical_declaration (variable_declarator
+            value: (await_expression(call_expression
+              function: (member_expression
+                object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                property: (property_identifier) @test_step (#eq? @test_step "step")
+              )
+              arguments: [
+                (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
+                (arguments . (object)? . (function_expression name: (identifier) @test.name))
+                (arguments . (object (pair
+                  key: (property_identifier) @key (#eq? @key "name")
+                  value: (string (string_fragment) @test.name)
+                )))
+              ]
+            ))
+          ))
+        ] @test.definition
+      )
+    ) .)
+  ))
 
-;; BDD describe - nested
-(call_expression
-	function: (identifier) @func_name (#match? @func_name "^describe$")
-	arguments: [
-		(arguments ((string) @namespace.name . (arrow_function)))
-		(arguments ((string) @namespace.name . (function)))
-	]
-) @namespace.definition
+  ; -- t.step 2 --
+  ((call_expression
+    function: (member_expression property: (property_identifier) @test_step (#eq? @test_step "step"))
+    arguments: (arguments (object (pair
+      key: (property_identifier) @step_key (#eq? @step_key "fn")
+      value: (_
+        parameters: (formal_parameters . (required_parameter pattern: (identifier) @test_id))
+        body: (statement_block
+          [
+            (expression_statement (await_expression (call_expression
+              function: [
+                (member_expression
+                  object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                  property: (property_identifier) @test_step (#eq? @test_step "step")
+                )
+                (member_expression
+                  object:(member_expression
+                    object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                    property: (property_identifier) @test_step (#eq? @test_step "step")
+                  )
+                  property: (property_identifier) @test_only (#eq? @test_only "only")
+                )
+              ]
+              arguments: [
+                (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
+                (arguments . (object)? . (function_expression name: (identifier) @test.name))
+                (arguments . (object (pair
+                  key: (property_identifier) @key (#eq? @key "name")
+                  value: (string (string_fragment) @test.name)
+                )))
+              ]
+            )))
+            (lexical_declaration (variable_declarator
+              value: (await_expression(call_expression
+                function: (member_expression
+                  object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                  property: (property_identifier) @test_step (#eq? @test_step "step")
+                )
+                arguments: [
+                  (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
+                  (arguments . (object)? . (function_expression name: (identifier) @test.name))
+                  (arguments . (object (pair
+                    key: (property_identifier) @key (#eq? @key "name")
+                    value: (string (string_fragment) @test.name)
+                  )))
+                ]
+              ))
+            ))
+          ] @test.definition
+        )
+      )
+    )) .)
+  ))
 
-;; BDD describe - flat
-(variable_declarator
-	name: (identifier) @namespace.id
-	value: (call_expression
-		function: (identifier) @func_name (#match? @func_name "^describe")
-		arguments: [
-			(arguments ((string) @namespace.name))
-			(arguments (object (pair
-				key: (property_identifier) @key (#match? @key "^name$")
-				value: (string) @namespace.name
-			)))
-		]
-	)
-) @namespace.definition
+  ; -- Deno.test nested --
+  ((call_expression
+    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test" "Deno.test.only")
+    arguments: (arguments (_
+      parameters: (formal_parameters . (required_parameter pattern: (identifier) @test_id))
+      body: (statement_block
+        [
+          (expression_statement (await_expression (call_expression
+            function: [
+              (member_expression
+                object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                property: (property_identifier) @test_step (#eq? @test_step "step")
+              )
+              (member_expression
+                object:(member_expression
+                  object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                  property: (property_identifier) @test_step (#eq? @test_step "step")
+                )
+                property: (property_identifier) @test_only (#eq? @test_only "only")
+              )
+            ]
+            arguments: [
+              (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
+              (arguments . (object)? . (function_expression name: (identifier) @test.name))
+              (arguments . (object (pair
+                key: (property_identifier) @key (#eq? @key "name")
+                value: (string (string_fragment) @test.name)
+              )))
+            ]
+          )))
+          (lexical_declaration (variable_declarator
+            value: (await_expression(call_expression
+              function: (member_expression
+                object: (identifier) @test_obj (#eq? @test_obj @test_id)
+                property: (property_identifier) @test_step (#eq? @test_step "step")
+              )
+              arguments: [
+                (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
+                (arguments . (object)? . (function_expression name: (identifier) @test.name))
+                (arguments . (object (pair
+                  key: (property_identifier) @key (#eq? @key "name")
+                  value: (string (string_fragment) @test.name)
+                )))
+              ]
+            ))
+          ))
+        ] @test.definition
+      )
+    ) .)
+  ))
 
-;; BDD it
-(call_expression
-	function: (identifier) @func_name (#match? @func_name "^it$")
-	arguments: [
-		(arguments ((string) @test.name . (arrow_function)))
-		(arguments ((string) @test.name . (function)))
-	]
-) @test.definition
-	]]
+  ; -- Deno.test flat --
+  ((call_expression
+    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test" "Deno.test.only")
+    arguments: [
+      ; Matches: `Deno.test("name", () => {})`
+      ; Matches: `Deno.test("name", { opts }, () => {})`
+      (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)] .)
+      ; Matches: `Deno.test(function name() {})`
+      ; Matches: `Deno.test({ opts }, function name() {})`
+      (arguments . (object)? . (function_expression name: (identifier) @test.name) .)
+      ; Matches `Deno.test({name: "name", fn: () => {} })`
+      (arguments . (object (pair
+        key: (property_identifier) @key (#eq? @key "name")
+        value: (string (string_fragment) @test.name))
+      ))
+    ]
+  )) @test.definition
+  ]]
 
-	local position_tree = lib.treesitter.parse_positions(
-		file_path,
-		query,
-		{ nested_namespaces = true }
-	)
+	local bdd = [[
+  ; BDD describe - nested
+  (call_expression
+    function: (identifier) @func_name (#match? @func_name "^describe$")
+    arguments: (arguments ((string (string_fragment) @namespace.name ) . [(arrow_function) (function_expression)]))
+  ) @namespace.definition
+
+  ; -- BDD it/test --
+  ((call_expression
+    function: (identifier) @func_name (#any-of? @func_name "it" "test")
+    arguments: [
+      (arguments . (identifier)? @namespace.id . ((string (string_fragment) @test.name) . [(arrow_function) (function_expression)]))
+    ]
+  )) @test.definition
+  ]]
+
+	local query = deno_test .. bdd
+
+	local position_tree = lib.treesitter.parse_positions(file_path, query, { nested_tests = true })
 
 	return position_tree
 end
@@ -151,56 +283,50 @@ end
 ---@param args neotest.RunArgs
 ---@return nil | neotest.RunSpec | neotest.RunSpec[]
 function DenoNeotestAdapter.build_spec(args)
-
 	local results_path = utils.get_results_file()
-    local position = args.tree:data()
+	local position = args.tree:data()
 	local strategy = {}
 
-	local cwd = assert(
-		DenoNeotestAdapter.root(position.path),
-		"could not locate root directory of " .. position.path
-	)
+	local cwd = assert(DenoNeotestAdapter.root(position.path), "could not locate root directory of " .. position.path)
 
-    local command_args = vim.tbl_flatten({
+	local command_args = vim.tbl_flatten({
 		"test",
 		position.path,
 		"--no-prompt",
 		vim.list_extend(config.get_args(), args.extra_args or {}),
 		config.get_allow() or "--allow-all",
-    })
+	})
 
 	if position.type == "test" then
-
 		local test_name = position.name
 		if args.strategy == "dap" then
-			test_name = test_name:gsub('^"', ''):gsub('"$', '')
+			test_name = test_name:gsub('^"', ""):gsub('"$', "")
 		end
 
-        vim.list_extend(command_args, { "--filter", test_name })
+		vim.list_extend(command_args, { "--filter", test_name })
 	end
 
 	-- BUG: Need to capture results after debugging the test
 	-- TODO: Adding additional arguments breaks debugging
 	-- need to determine if this is normal
 	if args.strategy == "dap" then
-
 		-- TODO: Allow users to specify an alternate port =HOST:PORT
 		vim.list_extend(command_args, { "--inspect-brk" })
 
 		strategy = {
-			name = 'Deno',
+			name = "Deno",
 			type = config.get_dap_adapter(),
-			request = 'launch',
-			cwd = '${workspaceFolder}',
-			runtimeExecutable = 'deno',
+			request = "launch",
+			cwd = "${workspaceFolder}",
+			runtimeExecutable = "deno",
 			runtimeArgs = command_args,
 			port = 9229,
-			protocol = 'inspector',
+			protocol = "inspector",
 		}
 	end
 
 	return {
-		command = 'deno ' .. table.concat(command_args, " "),
+		command = "deno " .. table.concat(command_args, " "),
 		context = {
 			results_path = results_path,
 			position = position,
@@ -216,27 +342,25 @@ end
 ---!param tree neotest.Tree
 ---@return table<string, neotest.Result>
 function DenoNeotestAdapter.results(spec)
-
-    local results = {}
-	local test_suite = ''
+	local results = {}
+	local test_suite = ""
 	local handle = assert(io.open(spec.context.results_path))
 	local line = handle:read("l")
 
 	-- TODO: ouput and short fields for failures
 	while line do
-
 		-- Next test suite
-		if string.find(line, 'running %d+ test') then
-			local testfile = string.match(line, 'running %d+ tests? from %.(.+%w+[sx]).-$')
+		if string.find(line, "running %d+ test") then
+			local testfile = string.match(line, "running %d+ tests? from %.(.+%w+[sx]).-$")
 			test_suite = spec.cwd .. testfile .. "::"
 
 		-- Passed test
-		elseif string.find(line, '%.%.%. .*ok') then
-            results[test_suite .. utils.get_test_name(line)] = { status = "passed" }
+		elseif string.find(line, "%.%.%. .*ok") then
+			results[test_suite .. utils.get_test_name(line)] = { status = "passed" }
 
 		-- Failed test
-		elseif string.find(line, '%.%.%. .*FAILED') then
-            results[test_suite .. utils.get_test_name(line)] = { status = "failed", }
+		elseif string.find(line, "%.%.%. .*FAILED") then
+			results[test_suite .. utils.get_test_name(line)] = { status = "failed" }
 		end
 
 		line = handle:read("l")
@@ -246,7 +370,7 @@ function DenoNeotestAdapter.results(spec)
 		handle:close()
 	end
 
-    return results
+	return results
 end
 
 setmetatable(DenoNeotestAdapter, {

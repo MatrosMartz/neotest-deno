@@ -6,6 +6,11 @@ Deno.test("hello world #1", () => {
   assertEquals(x, 3);
 });
 
+Deno.test("hello world #1.5", function () {
+  const x = 0 + 2;
+  assertEquals(x, 2);
+});
+
 // Compact form: named function.
 Deno.test(function helloWorld3() {
   const x = 1 + 2;
@@ -21,6 +26,13 @@ Deno.test({
   },
 });
 
+Deno.test({
+  name: "hello world #2.5",
+  fn: function () {
+    const x = 1 + 2;
+    assertEquals(x, 3);
+  },
+});
 // Similar to compact form, with additional configuration as a second argument.
 Deno.test("hello world #4", { permissions: { read: true } }, () => {
   const x = 1 + 2;

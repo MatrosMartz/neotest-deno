@@ -11,7 +11,7 @@ interface Book {
   title: string;
 }
 
-Deno.test("database", async (t) => {
+Deno.test(async function database(t) {
   const client = new Client({
     user: "user",
     database: "test",
@@ -21,7 +21,7 @@ Deno.test("database", async (t) => {
   await client.connect();
 
   // provide a step name and function
-  await t.step("insert user", async () => {
+  await t.step("insert user", async function () {
     const users = await client.queryObject<User>(
       "INSERT INTO users (name) VALUES ('Deno') RETURNING *",
     );
@@ -48,7 +48,7 @@ Deno.test("database", async (t) => {
 
   // nested steps are also supported
   await t.step("update and delete", async (t) => {
-    await t.step("update", () => {
+    await t.step(function update() {
       // even though this test throws, the outer promise does not reject
       // and the next test step will run
       throw new Error("Fail.");
@@ -62,8 +62,9 @@ Deno.test("database", async (t) => {
   // steps return a value saying if they ran or not
   const testRan = await t.step({
     name: "copy books",
-    fn: () => {
-      // ...etc...
+    fn: async (t) => {
+      await t.step("1", () => {});
+      await t.step("2", function () {});
     },
     ignore: true, // was ignored, so will return `false`
   });
