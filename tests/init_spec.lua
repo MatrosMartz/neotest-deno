@@ -1,5 +1,8 @@
 local async = require("nio").tests
 local neotest_deno = require("neotest-deno")
+local Tree = require("neotest.types").Tree
+
+require("neotest-deno-assertions")
 
 describe("DenoNeotestAdapter.init", function()
 	async.it("has the correct name", function()
@@ -245,8 +248,132 @@ describe("DenoNeotestAdapter.discover_positions", function()
 	end)
 end)
 
---describe("DenoNeotestAdapter.build_spec", function()
---end)
---
+describe("DenoNeotestAdapter.build_spec", function()
+	async.it("builds command for file test", function()
+		local positions = neotest_deno.discover_positions("./samples/1.tests.test.ts"):to_list()
+		---@param pos neotest.Position
+		local tree = Tree.from_list(positions, function(pos)
+			return pos.id
+		end)
+		local spec = neotest_deno.build_spec({ tree = tree })
+
+		assert.is.truthy(spec)
+		local command = spec.command
+		assert.is.truthy(command)
+		assert.contains(command, "deno")
+		assert.contains(command, "test")
+		assert.contains(command, "./samples/1.tests.test.ts")
+		assert.contains(command, "--no-prompt")
+		assert.contains(command, "--allow-all")
+		assert.is.truthy(spec.context.position.path)
+		assert.is.truthy(spec.context.results_path)
+	end)
+
+	async.it("builds command for test", function()
+		local positions = neotest_deno.discover_positions("./samples/1.tests.test.ts"):to_list()
+		---@param pos neotest.Position
+		local tree = Tree.from_list(positions, function(pos)
+			return pos.id
+		end)
+		local spec = neotest_deno.build_spec({ tree = tree:children()[1] })
+
+		assert.is.truthy(spec)
+		local command = spec.command
+		assert.is.truthy(command)
+		assert.contains(command, "deno")
+		assert.contains(command, "test")
+		assert.contains(command, "./samples/1.tests.test.ts")
+		assert.contains(command, "--no-prompt")
+		assert.contains(command, "--allow-all")
+		assert.contains(command, "--filter='/^hello world #1$/'")
+		assert.is.truthy(spec.context.position.path)
+		assert.is.truthy(spec.context.results_path)
+	end)
+
+	async.it("build command for subtest", function()
+		local positions = neotest_deno.discover_positions("./samples/3.test_steps.test.ts"):to_list()
+		---@param pos neotest.Position
+		local tree = Tree.from_list(positions, function(pos)
+			return pos.id
+		end)
+		local spec = neotest_deno.build_spec({ tree = tree:children()[1]:children()[1] })
+
+		assert.is.truthy(spec)
+		local command = spec.command
+		assert.is.truthy(command)
+		assert.contains(command, "deno")
+		assert.contains(command, "test")
+		assert.contains(command, "./samples/3.test_steps.test.ts")
+		assert.contains(command, "--no-prompt")
+		assert.contains(command, "--allow-all")
+		assert.contains(command, "--filter='/^database$/'")
+		assert.is.truthy(spec.context.position.path)
+		assert.is.truthy(spec.context.results_path)
+	end)
+
+	async.it("build command for nested subtest", function()
+		local positions = neotest_deno.discover_positions("./samples/3.test_steps.test.ts"):to_list()
+		---@param pos neotest.Position
+		local tree = Tree.from_list(positions, function(pos)
+			return pos.id
+		end)
+		local spec = neotest_deno.build_spec({ tree = tree:children()[1]:children()[3] })
+
+		assert.is.truthy(spec)
+		local command = spec.command
+		assert.is.truthy(command)
+		assert.contains(command, "deno")
+		assert.contains(command, "test")
+		assert.contains(command, "./samples/3.test_steps.test.ts")
+		assert.contains(command, "--no-prompt")
+		assert.contains(command, "--allow-all")
+		assert.contains(command, "--filter='/^database$/'")
+		assert.is.truthy(spec.context.position.path)
+		assert.is.truthy(spec.context.results_path)
+	end)
+
+	async.it("build command for namespace", function()
+		local positions = neotest_deno.discover_positions("./samples/4.bdd_nested.test.ts"):to_list()
+		---@param pos neotest.Position
+		local tree = Tree.from_list(positions, function(pos)
+			return pos.id
+		end)
+		local spec = neotest_deno.build_spec({ tree = tree:children()[1] })
+
+		assert.is.truthy(spec)
+		local command = spec.command
+		assert.is.truthy(command)
+		assert.contains(command, "deno")
+		assert.contains(command, "test")
+		assert.contains(command, "./samples/4.bdd_nested.test.ts")
+		assert.contains(command, "--no-prompt")
+		assert.contains(command, "--allow-all")
+		assert.contains(command, "--filter='/^User$/'")
+		assert.is.truthy(spec.context.position.path)
+		assert.is.truthy(spec.context.results_path)
+	end)
+
+	async.it("build command for nested namespace", function()
+		local positions = neotest_deno.discover_positions("./samples/4.bdd_nested.test.ts"):to_list()
+		---@param pos neotest.Position
+		local tree = Tree.from_list(positions, function(pos)
+			return pos.id
+		end)
+		local spec = neotest_deno.build_spec({ tree = tree:children()[1]:children()[3] })
+
+		assert.is.truthy(spec)
+		local command = spec.command
+		assert.is.truthy(command)
+		assert.contains(command, "deno")
+		assert.contains(command, "test")
+		assert.contains(command, "./samples/4.bdd_nested.test.ts")
+		assert.contains(command, "--no-prompt")
+		assert.contains(command, "--allow-all")
+		assert.contains(command, "--filter='/^User$/'")
+		assert.is.truthy(spec.context.position.path)
+		assert.is.truthy(spec.context.results_path)
+	end)
+end)
+
 --describe("DenoNeotestAdapter.results", function()
 --end)

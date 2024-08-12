@@ -14,8 +14,8 @@ end
 
 -- Extract test name from output line. Add quotes if necessary
 M.get_test_name = function(output_line)
-	local test_name = string.match(output_line, '^(.*) %.%.%. .*$')
-	if string.match(test_name, ' ') then
+	local test_name = string.match(output_line, "^(.*) %.%.%. .*$")
+	if string.match(test_name, " ") then
 		test_name = '"' .. test_name .. '"'
 	end
 	return test_name

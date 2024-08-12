@@ -8,7 +8,7 @@ describe("User", () => {
     assertEquals(User.users.size, 0);
   });
 
-  test("constructor", () => {
+  test(function constructor() {
     try {
       const user = new User("Kyle");
       assertEquals(user.name, "Kyle");
@@ -18,7 +18,7 @@ describe("User", () => {
     }
   });
 
-  describe("age", () => {
+  describe("age", function () {
     let user: User;
 
     beforeEach(() => {
@@ -29,15 +29,18 @@ describe("User", () => {
       User.users.clear();
     });
 
-    it("getAge", function () {
+    it({ name: "getAge" }, function () {
       assertThrows(() => user.getAge(), Error, "Age unknown");
       user.age = 18;
       assertEquals(user.getAge(), 18);
     });
 
-    test("setAge", function () {
-      user.setAge(18);
-      assertEquals(user.getAge(), 18);
+    test({
+      name: "setAge",
+      fn: () => {
+        user.setAge(18);
+        assertEquals(user.getAge(), 18);
+      },
     });
   });
 });

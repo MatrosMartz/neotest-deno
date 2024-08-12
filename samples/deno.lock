@@ -223,5 +223,12 @@
     "https://esm.sh/preact@10.11.0/jsx-runtime": "85de45eaae62e9ced985376838db9b4f2f0ba94e008a9575afa131d03e247c0c",
     "https://esm.sh/stable/preact@10.11.0/denonext/jsx-runtime.js": "03c711c4a0eaf1489d807db5611a94f4e34e9c25763c0da060014964ff95c80b",
     "https://esm.sh/stable/preact@10.11.0/denonext/preact.mjs": "71306b68971e656b4c8bff31e261528c4fe14bf87f8e65f214b671f45bef2d31"
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/assert@^1.0.2",
+      "jsr:@std/async@^1.0.3",
+      "jsr:@std/testing@^1.0.0"
+    ]
   }
 }

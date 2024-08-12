@@ -6,6 +6,30 @@ local config = require("neotest-deno.config")
 ---@field name string
 local DenoNeotestAdapter = { name = "neotest-deno" }
 
+---Escape Test Patterns
+---@param s string
+---@return string
+local escape_test_pattern = function(s)
+	return (
+		s:gsub("%(", "%\\(")
+			:gsub("%)", "%\\)")
+			:gsub("%]", "%\\]")
+			:gsub("%[", "%\\[")
+			:gsub("%}", "%\\}")
+			:gsub("%{", "%\\{")
+			:gsub("%.", "%\\.")
+			:gsub("%+", "%\\+")
+			:gsub("%*", "%\\*")
+			:gsub("%-", "%\\-")
+			:gsub("%^", "%\\^")
+			:gsub("%$", "%\\$")
+			:gsub("%?", "%\\?")
+			:gsub("%'", "%\\'")
+			:gsub("%/", "%\\/")
+			:gsub("%\\", "%\\\\")
+	)
+end
+
 ---Find the project root directory given a current directory to work from.
 ---Should no root be found, the adapter can still be used in a non-project context if a test file matches.
 ---@async
@@ -261,14 +285,31 @@ function DenoNeotestAdapter.discover_positions(file_path)
   ; BDD describe - nested
   (call_expression
     function: (identifier) @func_name (#match? @func_name "^describe$")
-    arguments: (arguments ((string (string_fragment) @namespace.name ) . [(arrow_function) (function_expression)]))
+    arguments: [
+      (arguments . ((string (string_fragment) @namespace.name ) . (object)? . [(arrow_function) (function_expression)]))
+      (arguments . (object)? . (function_expression name: (identifier) @namespace.name) .)
+      (arguments . (object (pair
+        key: (property_identifier) @key (#eq? @key "name")
+        value: (string (string_fragment) @namespace.name)
+      )).)
+    ]
   ) @namespace.definition
 
   ; -- BDD it/test --
   ((call_expression
     function: (identifier) @func_name (#any-of? @func_name "it" "test")
     arguments: [
-      (arguments . (identifier)? @namespace.id . ((string (string_fragment) @test.name) . [(arrow_function) (function_expression)]))
+      ; Matches: `Deno.test("name", () => {})`
+      ; Matches: `Deno.test("name", { opts }, () => {})`
+      (arguments . (identifier)? . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)] .)
+      ; Matches: `Deno.test(function name() {})`
+      ; Matches: `Deno.test({ opts }, function name() {})`
+      (arguments . (identifier)? . (object)? . (function_expression name: (identifier) @test.name) .)
+      ; Matches `Deno.test({name: "name", fn: () => {} })`
+      (arguments . (object (pair
+        key: (property_identifier) @key (#eq? @key "name")
+        value: (string (string_fragment) @test.name))
+      ))
     ]
   )) @test.definition
   ]]
@@ -284,26 +325,41 @@ end
 ---@return nil | neotest.RunSpec | neotest.RunSpec[]
 function DenoNeotestAdapter.build_spec(args)
 	local results_path = utils.get_results_file()
+
+	if not args.tree then
+		return
+	end
+
 	local position = args.tree:data()
 	local strategy = {}
 
 	local cwd = assert(DenoNeotestAdapter.root(position.path), "could not locate root directory of " .. position.path)
 
-	local command_args = vim.tbl_flatten({
+	local command = vim.iter({
+		"deno",
 		"test",
 		position.path,
 		"--no-prompt",
 		vim.list_extend(config.get_args(), args.extra_args or {}),
 		config.get_allow() or "--allow-all",
 	})
+		:flatten(math.huge)
+		:totable()
 
-	if position.type == "test" then
-		local test_name = position.name
-		if args.strategy == "dap" then
-			test_name = test_name:gsub('^"', ""):gsub('"$', "")
+	if position.type == "test" or position.type == "namespace" then
+		local first_separator = position.id:find("::") + 2
+		local test_name = position.id:sub(first_separator)
+		local a = test_name:find("::")
+		if a then
+			test_name = test_name:sub(0, a - 1)
 		end
+		-- if args.strategy == "dap" then
+		-- 	test_name = test_name:gsub('^"', ""):gsub('"$', "")
+		-- end
 
-		vim.list_extend(command_args, { "--filter", test_name })
+		test_name = escape_test_pattern(test_name)
+
+		vim.list_extend(command, { "--filter='/^" .. test_name .. "$/'" })
 	end
 
 	-- BUG: Need to capture results after debugging the test
@@ -311,7 +367,7 @@ function DenoNeotestAdapter.build_spec(args)
 	-- need to determine if this is normal
 	if args.strategy == "dap" then
 		-- TODO: Allow users to specify an alternate port =HOST:PORT
-		vim.list_extend(command_args, { "--inspect-brk" })
+		vim.list_extend(command, { "--inspect-brk" })
 
 		strategy = {
 			name = "Deno",
@@ -319,14 +375,14 @@ function DenoNeotestAdapter.build_spec(args)
 			request = "launch",
 			cwd = "${workspaceFolder}",
 			runtimeExecutable = "deno",
-			runtimeArgs = command_args,
+			runtimeArgs = table.concat(command, " "),
 			port = 9229,
 			protocol = "inspector",
 		}
 	end
 
 	return {
-		command = "deno " .. table.concat(command_args, " "),
+		command = command,
 		context = {
 			results_path = results_path,
 			position = position,
