@@ -1,6 +1,7 @@
 local async = require("nio").tests
 local neotest_deno = require("neotest-deno")
 local Tree = require("neotest.types").Tree
+local utils = require("neotest-deno.utils")
 
 require("neotest-deno-assertions")
 
@@ -375,5 +376,136 @@ describe("DenoNeotestAdapter.build_spec", function()
 	end)
 end)
 
---describe("DenoNeotestAdapter.results", function()
---end)
+describe("DenoNeotestAdapter.results", function()
+	async.it("parses test suites successfully", function()
+		local test_cwd = utils.path_join(vim.fn.getcwd(), "samples/1.tests.test.ts")
+		local results = neotest_deno.results({
+			context = {
+				results_path = "./samples/.results.1.tests",
+				position = {
+					name = "1.tests.test.ts",
+				},
+			},
+			cwd = utils.path_join(vim.fn.getcwd(), "samples"),
+		})
+
+		local passing = {
+			"hello world #1",
+			"hello world #1.5",
+			"hello world #2",
+			"hello world #2.5",
+			"helloWorld3",
+			"hello world #7",
+		}
+		local failing = { "hello world #4", "hello world #5", "helloWorld6" }
+
+		for _, pass in pairs(passing) do
+			local result = results[test_cwd .. "::" .. pass]
+			assert.is.truthy(result)
+			assert.equals(result.status, "passed")
+			assert.is.Nil(result.short)
+		end
+
+		for _, fail in pairs(failing) do
+			local result = results[test_cwd .. "::" .. fail]
+			assert.equals(result.status, "failed")
+			assert.is.Nil(result.short)
+		end
+	end)
+
+	async.it("parses subtest suites successfully", function()
+		local test_cwd = utils.path_join(vim.fn.getcwd(), "samples/9.deno_nested.test.ts")
+		local results = neotest_deno.results({
+			context = {
+				results_path = "./samples/.results.9.deno_nested",
+				position = {
+					name = "9.deno_nested.test.ts",
+				},
+			},
+			cwd = utils.path_join(vim.fn.getcwd(), "samples"),
+		})
+
+		local passing = {
+			"User",
+			"User::users initially empty",
+			"User::constructor",
+			"User::age",
+			"User::age::getAge",
+			"User::age::setAge",
+		}
+
+		for _, pass in pairs(passing) do
+			local result = results[test_cwd .. "::" .. pass]
+			assert.is.truthy(result)
+			assert.equals(result.status, "passed")
+			assert.is.Nil(result.short)
+		end
+	end)
+
+	async.it("parses bbd nested suites successfully", function()
+		local test_cwd = utils.path_join(vim.fn.getcwd(), "samples/4.bdd_nested.test.ts")
+		local results = neotest_deno.results({
+			context = {
+				results_path = "./samples/.results.4.bdd_nested",
+				position = {
+					name = "4.bdd_nested.test.ts",
+				},
+			},
+			cwd = utils.path_join(vim.fn.getcwd(), "samples"),
+		})
+
+		local passing = { "User::constructor", "User::age::setAge" }
+		local skipping = { "User::users initially empty" }
+		local failing = { "User", "User::age", "User::age::getAge" }
+
+		for _, pass in pairs(passing) do
+			local result = results[test_cwd .. "::" .. pass]
+			assert.is.truthy(result)
+			assert.equals(result.status, "passed")
+			assert.is.Nil(result.short)
+		end
+
+		for _, skip in pairs(skipping) do
+			local result = results[test_cwd .. "::" .. skip]
+			assert.is.truthy(result)
+			assert.equals(result.status, "skipped")
+			assert.is.Nil(result.short)
+		end
+
+		for _, fail in pairs(failing) do
+			local result = results[test_cwd .. "::" .. fail]
+			assert.is.truthy(result)
+			assert.equals(result.status, "failed")
+			assert.is.Nil(result.short)
+		end
+	end)
+
+	async.it("parses bdd flat suites successfully", function()
+		local test_cwd = utils.path_join(vim.fn.getcwd(), "samples/5.bdd_flat.test.ts")
+		local results = neotest_deno.results({
+			context = {
+				results_path = "./samples/.results.5.bdd_flat",
+				position = {
+					name = "5.bdd_flat.test.ts",
+				},
+			},
+			cwd = utils.path_join(vim.fn.getcwd(), "samples"),
+		})
+
+		local passing = {
+			"User",
+			"User::users initially empty",
+			"User::constructor",
+			"User::age",
+			"User::age::getAge",
+			"User::age::setAge",
+		}
+
+		for _, pass in pairs(passing) do
+			local result = results[test_cwd .. "::" .. pass]
+			assert.is.truthy(result)
+			assert.equals(result.status, "passed")
+			assert.is.Nil(result.short)
+		end
+	end)
+end)

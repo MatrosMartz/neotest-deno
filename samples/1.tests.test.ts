@@ -54,7 +54,7 @@ Deno.test({ permissions: { read: true } }, function helloWorld6() {
   assertEquals(x, 3);
 });
 
-Deno.test.only("hello world #7", () => {
+Deno.test("hello world #7", () => {
   const x = 1 + 2;
   assertEquals(x, 3);
 });

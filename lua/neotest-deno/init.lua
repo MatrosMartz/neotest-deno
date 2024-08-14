@@ -264,7 +264,7 @@ function DenoNeotestAdapter.discover_positions(file_path)
 
   ; -- Deno.test flat --
   ((call_expression
-    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test" "Deno.test.only")
+    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test")
     arguments: [
       ; Matches: `Deno.test("name", () => {})`
       ; Matches: `Deno.test("name", { opts }, () => {})`
@@ -284,7 +284,9 @@ function DenoNeotestAdapter.discover_positions(file_path)
 	local bdd = [[
   ; BDD describe - nested
   (call_expression
-    function: (identifier) @func_name (#match? @func_name "^describe$")
+    function: [
+      ((_) @func_name (#any-of? @func_name "describe.only" "describe.ignore" "describe"))
+    ]
     arguments: [
       (arguments . ((string (string_fragment) @namespace.name ) . (object)? . [(arrow_function) (function_expression)]))
       (arguments . (object)? . (function_expression name: (identifier) @namespace.name) .)
@@ -297,15 +299,16 @@ function DenoNeotestAdapter.discover_positions(file_path)
 
   ; -- BDD it/test --
   ((call_expression
-    function: (identifier) @func_name (#any-of? @func_name "it" "test")
+    function:
+    	((_) @func_name (#any-of? @func_name "it" "test" "it.only" "it.ignore" "test.only" "test.ignore"))
     arguments: [
-      ; Matches: `Deno.test("name", () => {})`
-      ; Matches: `Deno.test("name", { opts }, () => {})`
+      ; Matches: `it("name", () => {})`
+      ; Matches: `it("name", { opts }, () => {})`
       (arguments . (identifier)? . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)] .)
-      ; Matches: `Deno.test(function name() {})`
+      ; Matches: `it(function name() {})`
       ; Matches: `Deno.test({ opts }, function name() {})`
-      (arguments . (identifier)? . (object)? . (function_expression name: (identifier) @test.name) .)
-      ; Matches `Deno.test({name: "name", fn: () => {} })`
+      (arguments (object)? . (function_expression name: (identifier) @test.name) .)
+      ; Matches `it({name: "name", fn: () => {} })`
       (arguments . (object (pair
         key: (property_identifier) @key (#eq? @key "name")
         value: (string (string_fragment) @test.name))
@@ -398,25 +401,38 @@ end
 ---!param tree neotest.Tree
 ---@return table<string, neotest.Result>
 function DenoNeotestAdapter.results(spec)
+	---@type table<string, neotest.Result>
 	local results = {}
 	local test_suite = ""
 	local handle = assert(io.open(spec.context.results_path))
+	---@type string
 	local line = handle:read("l")
 
 	-- TODO: ouput and short fields for failures
 	while line do
+		local test_name = utils.get_test_name(line)
+		-- Remove namespace from test_suite
+		if test_name and utils.ends_with(test_suite, "::" .. test_name .. "::") then
+			test_suite = test_suite:sub(1, -#test_name - 3)
+		end
 		-- Next test suite
 		if string.find(line, "running %d+ test") then
-			local testfile = string.match(line, "running %d+ tests? from %.(.+%w+[sx]).-$")
-			test_suite = spec.cwd .. testfile .. "::"
-
+			-- local testfile = string.match(line, "running %d+ tests? from %.(.+%w+[sx]).-$")
+			test_suite = utils.path_join(spec.cwd, spec.context.position.name) .. "::"
 		-- Passed test
-		elseif string.find(line, "%.%.%. .*ok") then
-			results[test_suite .. utils.get_test_name(line)] = { status = "passed" }
+		elseif line:find("%.%.%. .*ok") then
+			results[test_suite .. test_name] = { status = "passed", short }
+
+		-- skipped test
+		elseif line:find("%.%.%. .*ignored") then
+			results[test_suite .. test_name] = { status = "skipped" }
 
 		-- Failed test
-		elseif string.find(line, "%.%.%. .*FAILED") then
-			results[test_suite .. utils.get_test_name(line)] = { status = "failed" }
+		elseif line:find("%.%.%. .*FAILED") then
+			results[test_suite .. test_name] = { status = "failed" }
+		-- Add namespace to test_suite
+		elseif line:find("%.%.%.") then
+			test_suite = test_suite .. test_name .. "::"
 		end
 
 		line = handle:read("l")

@@ -1,0 +1,39 @@
+[0m[38;5;245mrunning 9 tests from ./samples/1.tests.test.ts[0m
+hello world #1 ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+hello world #1.5 ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+helloWorld3 ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+hello world #2 ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+hello world #2.5 ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+hello world #4 ... [0m[31mFAILED[0m [0m[38;5;245m(3ms)[0m
+hello world #5 ... [0m[31mFAILED[0m [0m[38;5;245m(0ms)[0m
+helloWorld6 ... [0m[31mFAILED[0m [0m[38;5;245m(0ms)[0m
+hello world #7 ... [0m[32mok[0m [0m[38;5;245m(0ms)[0m
+
+[0m[1m[37m[41m ERRORS [0m
+
+hello world #4 [0m[38;5;245m=> ./samples/1.tests.test.ts:37:6[0m
+[0m[1m[31merror[0m: PermissionDenied: Can't escalate parent thread permissions
+    at [0m[1m[3mpledgePermissions[0m ([0m[36mext:cli/40_test_common.js[0m:[0m[33m41[0m:[0m[33m14[0m)
+    at [0m[1m[3mapplyPermissions[0m ([0m[36mext:cli/40_test_common.js[0m:[0m[33m52[0m:[0m[33m19[0m)
+    at [0m[1m[3mouterWrapped[0m ([0m[36mext:cli/40_test.js[0m:[0m[33m134[0m:[0m[33m20[0m)
+
+hello world #5 [0m[38;5;245m=> ./samples/1.tests.test.ts:43:6[0m
+[0m[1m[31merror[0m: PermissionDenied: Can't escalate parent thread permissions
+    at [0m[1m[3mpledgePermissions[0m ([0m[36mext:cli/40_test_common.js[0m:[0m[33m41[0m:[0m[33m14[0m)
+    at [0m[1m[3mapplyPermissions[0m ([0m[36mext:cli/40_test_common.js[0m:[0m[33m52[0m:[0m[33m19[0m)
+    at [0m[1m[3mouterWrapped[0m ([0m[36mext:cli/40_test.js[0m:[0m[33m134[0m:[0m[33m20[0m)
+
+helloWorld6 [0m[38;5;245m=> ./samples/1.tests.test.ts:52:6[0m
+[0m[1m[31merror[0m: PermissionDenied: Can't escalate parent thread permissions
+    at [0m[1m[3mpledgePermissions[0m ([0m[36mext:cli/40_test_common.js[0m:[0m[33m41[0m:[0m[33m14[0m)
+    at [0m[1m[3mapplyPermissions[0m ([0m[36mext:cli/40_test_common.js[0m:[0m[33m52[0m:[0m[33m19[0m)
+    at [0m[1m[3mouterWrapped[0m ([0m[36mext:cli/40_test.js[0m:[0m[33m134[0m:[0m[33m20[0m)
+
+[0m[1m[37m[41m FAILURES [0m
+
+hello world #4 [0m[38;5;245m=> ./samples/1.tests.test.ts:37:6[0m
+hello world #5 [0m[38;5;245m=> ./samples/1.tests.test.ts:43:6[0m
+helloWorld6 [0m[38;5;245m=> ./samples/1.tests.test.ts:52:6[0m
+
+[0m[31mFAILED[0m | 6 passed | 3 failed [0m[38;5;245m(26ms)[0m
+

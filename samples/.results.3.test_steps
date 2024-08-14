@@ -1,0 +1,22 @@
+[0m[38;5;245mrunning 1 test from ./samples/3.test_steps.test.ts[0m
+database ... [0m[31mFAILED[0m [0m[38;5;245m(12ms)[0m
+
+[0m[1m[37m[41m ERRORS [0m
+
+database [0m[38;5;245m=> ./samples/3.test_steps.test.ts:14:6[0m
+[0m[1m[31merror[0m: PermissionDenied: Requires net access to "localhost:5432", run again with the --allow-net flag
+    this.#conn = await Deno.connect(options);
+[0m[31m                            ^[0m
+    at [0m[1m[3mObject.connect[0m ([0m[36mext:deno_net/01_net.js[0m:[0m[33m589[0m:[0m[33m61[0m)
+    at [0m[1m[3mConnection.#openConnection[0m ([0m[36mhttps://deno.land/x/postgres@v0.19.3/connection/connection.ts[0m:[0m[33m266[0m:[0m[33m29[0m)
+    at [0m[1m[3mConnection.#startup[0m ([0m[36mhttps://deno.land/x/postgres@v0.19.3/connection/connection.ts[0m:[0m[33m342[0m:[0m[33m33[0m)
+    at [0m[1m[3mConnection.startup[0m ([0m[36mhttps://deno.land/x/postgres@v0.19.3/connection/connection.ts[0m:[0m[33m494[0m:[0m[33m30[0m)
+    at [0m[1m[3mClient.connect[0m ([0m[36mhttps://deno.land/x/postgres@v0.19.3/client.ts[0m:[0m[33m233[0m:[0m[33m30[0m)
+    at [0m[1m[3mdatabase[0m ([0m[36mfile:///home/tsonko/Documentos/neotest-deno/samples/3.test_steps.test.ts[0m:[0m[33m21[0m:[0m[33m16[0m)
+
+[0m[1m[37m[41m FAILURES [0m
+
+database [0m[38;5;245m=> ./samples/3.test_steps.test.ts:14:6[0m
+
+[0m[31mFAILED[0m | 0 passed | 1 failed [0m[38;5;245m(15ms)[0m
+
