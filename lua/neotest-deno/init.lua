@@ -417,10 +417,11 @@ function DenoNeotestAdapter.results(spec)
 		end
 		-- Next test suite
 		if string.find(line, "running %d+ test") then
-			local testfile = string.match(line, "running %d+ tests? from %.(.+%w+[sx]).-$")
-			test_suite = spec.cwd .. testfile .. "::" -- Passed test
+			local testfile = line:match("running %d+ tests? from %.(.+%w+[sx]).-$")
+			test_suite = spec.cwd .. testfile .. "::"
+		-- Passed test
 		elseif line:find("%.%.%. .*ok") then
-			results[test_suite .. test_name] = { status = "passed", short }
+			results[test_suite .. test_name] = { status = "passed" }
 
 		-- skipped test
 		elseif line:find("%.%.%. .*ignored") then
@@ -430,7 +431,7 @@ function DenoNeotestAdapter.results(spec)
 		elseif line:find("%.%.%. .*FAILED") then
 			results[test_suite .. test_name] = { status = "failed" }
 		-- Add namespace to test_suite
-		elseif line:find("%.%.%.") then
+		elseif line:find("%.%.%.") and test_name then
 			test_suite = test_suite .. test_name .. "::"
 		end
 
