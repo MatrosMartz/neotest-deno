@@ -11,7 +11,8 @@
  * @module
  */
 
-import chai from "npm:chai@5.1.1";
+// @ts-types="npm:@types/chai"
+import * as chai from "npm:chai@5.1.1";
 
 const foo = "bar";
 const beverages = { tea: ["chai", "matcha", "oolong"] };

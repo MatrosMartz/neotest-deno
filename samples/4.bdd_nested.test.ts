@@ -32,7 +32,7 @@ describe("User", () => {
     it({ name: "getAge" }, function () {
       assertThrows(() => user.getAge(), Error, "Age unknown");
       user.age = 18;
-      assertEquals(user.getAge(), 17);
+      assertEquals(user.getAge(), 18);
     });
 
     test({

@@ -12,8 +12,10 @@
  * @module
  */
 
+// @ts-types="npm:@types/sinon"
 import sinon from "npm:sinon@9.2.4";
-import chai from "npm:chai@5.1.1";
+// @ts-types="npm:@types/chai/index.d.ts"
+import * as chai from "npm:chai@5.1.1";
 
 Deno.test("stubbed callback", () => {
   const callback = sinon.stub();
