@@ -32,12 +32,14 @@ TODO
 ## Test Support
 
 - [x] Deno.test tests
+- [x] Deno.test subtest
 - [x] bdd - nested tests
 - [ ] bdd - flat tests
-- [ ] Chai
-- [ ] Sinon.JS
-- [ ] fast-check
+- [x] Chai
+- [x] Sinon.JS
+- [x] fast-check
 - [ ] Documentation tests
+- [x] jest expect
 
 ## DAP Support
 
