@@ -417,8 +417,8 @@ function DenoNeotestAdapter.results(spec)
 		end
 		-- Next test suite
 		if string.find(line, "running %d+ test") then
-			test_suite = string.match(line, "running %d+ tests? from (%..+%w+[sx]).-$") .. "::"
-		-- Passed test
+			local testfile = string.match(line, "running %d+ tests? from %.(.+%w+[sx]).-$")
+			test_suite = spec.cwd .. testfile .. "::" -- Passed test
 		elseif line:find("%.%.%. .*ok") then
 			results[test_suite .. test_name] = { status = "passed", short }
 

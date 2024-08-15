@@ -378,11 +378,12 @@ end)
 
 describe("DenoNeotestAdapter.results", function()
 	async.it("parses test suites successfully", function()
-		local test_cwd = "./samples/1.tests.test.ts::"
+		local test_cwd = vim.fn.getcwd() .. "/samples/1.tests.test.ts::"
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.1.tests",
 			},
+			cwd = vim.fn.getcwd(),
 		})
 
 		local passing = {
@@ -410,11 +411,12 @@ describe("DenoNeotestAdapter.results", function()
 	end)
 
 	async.it("parses subtest suites successfully", function()
-		local test_cwd = "./samples/9.deno_nested.test.ts::"
+		local test_cwd = vim.fn.getcwd() .. "/samples/9.deno_nested.test.ts::"
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.9.deno_nested",
 			},
+			cwd = vim.fn.getcwd(),
 		})
 
 		local passing = {
@@ -435,11 +437,12 @@ describe("DenoNeotestAdapter.results", function()
 	end)
 
 	async.it("parses bbd nested suites successfully", function()
-		local test_cwd = "./samples/4.bdd_nested.test.ts::"
+		local test_cwd = vim.fn.getcwd() .. "/samples/4.bdd_nested.test.ts::"
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.4.bdd_nested",
 			},
+			cwd = vim.fn.getcwd(),
 		})
 
 		local passing = { "User::constructor", "User::age::setAge" }
@@ -469,11 +472,12 @@ describe("DenoNeotestAdapter.results", function()
 	end)
 
 	async.it("parses bdd flat suites successfully", function()
-		local test_cwd = "./samples/5.bdd_flat.test.ts::"
+		local test_cwd = vim.fn.getcwd() .. "/samples/5.bdd_flat.test.ts::"
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.5.bdd_flat",
 			},
+			cwd = vim.fn.getcwd(),
 		})
 
 		local passing = {
