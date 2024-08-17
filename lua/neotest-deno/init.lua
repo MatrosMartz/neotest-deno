@@ -213,7 +213,7 @@ function DenoNeotestAdapter.discover_positions(file_path)
 
   ; -- Deno.test nested --
   ((call_expression
-    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test" "Deno.test.only")
+    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test" "Deno.test.ignore" "Deno.test.only")
     arguments: (arguments (_
       parameters: (formal_parameters . (required_parameter pattern: (identifier) @test_id))
       body: (statement_block
@@ -264,7 +264,7 @@ function DenoNeotestAdapter.discover_positions(file_path)
 
   ; -- Deno.test flat --
   ((call_expression
-    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test")
+    function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test" "Deno.test.ignore" "Deno.test.only")
     arguments: [
       ; Matches: `Deno.test("name", () => {})`
       ; Matches: `Deno.test("name", { opts }, () => {})`
@@ -370,17 +370,19 @@ function DenoNeotestAdapter.build_spec(args)
 	-- need to determine if this is normal
 	if args.strategy == "dap" then
 		-- TODO: Allow users to specify an alternate port =HOST:PORT
-		vim.list_extend(command, { "--inspect-brk" })
-
 		strategy = {
-			name = "Deno",
+			name = "Debug Deno Tests",
 			type = config.get_dap_adapter(),
 			request = "launch",
 			cwd = "${workspaceFolder}",
 			runtimeExecutable = "deno",
-			runtimeArgs = table.concat(command, " "),
-			port = 9229,
-			protocol = "inspector",
+			runtimeArgs = {
+				"test",
+				"--allow-all",
+				"--inspect-wait",
+			},
+			program = "${file}",
+			attachSimplePort = 9229,
 		}
 	end
 

@@ -17,7 +17,7 @@ M.get_additional_filter_dirs = function()
 end
 
 M.get_dap_adapter = function()
-	return 'deno'
+	return "pwa-node"
 end
 
 return M

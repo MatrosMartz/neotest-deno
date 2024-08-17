@@ -496,4 +496,18 @@ describe("DenoNeotestAdapter.results", function()
 			assert.is.Nil(result.short)
 		end
 	end)
+
+	async.it("parses test filter suites successfully", function()
+		local test_cwd = vim.fn.getcwd() .. "/samples/1.tests.test.ts::"
+		local results = neotest_deno.results({
+			context = {
+				results_path = "./samples/.results.1.tests.filter",
+			},
+			cwd = vim.fn.getcwd(),
+		})
+
+		local result = results[test_cwd .. "hello world #1"]
+		assert.is.truthy(result)
+		assert.equals(result.status, "passed")
+	end)
 end)
