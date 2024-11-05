@@ -11,7 +11,9 @@ local DenoNeotestAdapter = { name = "neotest-deno" }
 ---@return string
 local escape_test_pattern = function(s)
 	return (
-		s:gsub("%(", "%\\(")
+		s
+			:gsub("%\\", "%\\\\")
+			:gsub("%(", "%\\(")
 			:gsub("%)", "%\\)")
 			:gsub("%]", "%\\]")
 			:gsub("%[", "%\\[")
@@ -20,13 +22,12 @@ local escape_test_pattern = function(s)
 			:gsub("%.", "%\\.")
 			:gsub("%+", "%\\+")
 			:gsub("%*", "%\\*")
-			:gsub("%-", "%\\-")
+			-- :gsub("%-", "%\\-")
 			:gsub("%^", "%\\^")
 			:gsub("%$", "%\\$")
 			:gsub("%?", "%\\?")
 			:gsub("%'", "%\\'")
 			:gsub("%/", "%\\/")
-			:gsub("%\\", "%\\\\")
 	)
 end
 
@@ -362,7 +363,8 @@ function DenoNeotestAdapter.build_spec(args)
 
 		test_name = escape_test_pattern(test_name)
 
-		vim.list_extend(command, { "--filter='/^" .. test_name .. "$/'" })
+		vim.list_extend(command, { "--filter", "/^" .. test_name .. "$/" })
+		-- print(vim.inspect(command))
 	end
 
 	-- BUG: Need to capture results after debugging the test
