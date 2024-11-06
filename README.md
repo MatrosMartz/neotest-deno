@@ -4,25 +4,72 @@ A [neotest](https://github.com/rcarriga/neotest) adapter for [deno](https://deno
 
 WIP
 
-![neotest-deno1](https://user-images.githubusercontent.com/21696951/206565569-3d7b6489-da56-42e3-bf72-9b2599dc3a30.gif)
-
+![neotest-deno](https://user-images.githubusercontent.com/21696951/206565569-3d7b6489-da56-42e3-bf72-9b2599dc3a30.gif)
 
 ## Installation
 
-Requires [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter), with the `typescript` parser installed.
-
 Install and configure like any other neotest adapter:
+
+### Lazy.nvim
+
+```lua
+{
+  "nvim-neotest/neotest",
+  dependencies = {
+    ...,
+    "markemmons/neotest-deno",
+  },
+  config = function()
+    require("neotest").setup({
+      ...,
+      adapters = {
+        require("neotest-deno"),
+      }
+    })
+  end,
+}
+```
+
+### LazyVim
+
+```lua
+{
+  "nvim-neotest/neotest",
+  dependencies = {
+    "markemmons/neotest-deno",
+  },
+  opts = {
+    adapters = {
+      ["neotest-deno"] = {},
+    },
+  },
+
+}
+```
+
+### Packer
 
 ```lua
 
-use "markemmons/neotest-deno"
-
-require("neotest").set({
-	adapters = {
-		require("neotest-deno"),
-		...
-	}
+use ({
+  "nvim-neotest/neotest",
+  requires= {
+    ...,
+    "markemmons/neotest-deno",
+    config = function():
+      ...,
+      adapters = {
+        require("neotes-deno")
+      }
+    end
+  }
 })
+```
+
+Requires [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter), with the `typescript` parser installed.
+
+```
+:TSIntall typescript
 ```
 
 ## Configuration
