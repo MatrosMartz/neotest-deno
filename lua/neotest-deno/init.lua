@@ -2,6 +2,13 @@ local lib = require("neotest.lib")
 local utils = require("neotest-deno.utils")
 local config = require("neotest-deno.config")
 
+---@class neotest.DenoOptions
+---@field args? table<string, string> | fun(): table<string, string>
+---@field allow? table<string, string> | fun(): table<string,string>
+---@field root_files? table<string,string> |fun(): table<string,string>
+---@field filter_dirs? table<string, string> |fun():table<string,string>
+---@field dap_adapter? string | fun(): string
+
 ---@class neotest.Adapter
 ---@field name string
 local DenoNeotestAdapter = { name = "neotest-deno" }
@@ -450,11 +457,13 @@ function DenoNeotestAdapter.results(spec)
 end
 
 setmetatable(DenoNeotestAdapter, {
+	---@param opts neotest.DenoOptions
 	__call = function(_, opts)
 		if utils.is_callable(opts.args) then
 			config.get_args = opts.args
 		elseif opts.args then
 			config.get_args = function()
+				---@type table
 				return opts.args
 			end
 		end
@@ -462,6 +471,7 @@ setmetatable(DenoNeotestAdapter, {
 			config.get_allow = opts.allow
 		elseif opts.allow then
 			config.get_allow = function()
+				---@type string?
 				return opts.allow
 			end
 		end
@@ -469,6 +479,7 @@ setmetatable(DenoNeotestAdapter, {
 			config.get_additional_root_files = opts.root_files
 		elseif opts.root_files then
 			config.get_additional_root_files = function()
+				---@type table
 				return opts.root_files
 			end
 		end
@@ -476,6 +487,7 @@ setmetatable(DenoNeotestAdapter, {
 			config.get_additional_filter_dirs = opts.filter_dirs
 		elseif opts.filter_dirs then
 			config.get_additional_filter_dirs = function()
+				---@type table
 				return opts.filter_dirs
 			end
 		end
@@ -483,6 +495,7 @@ setmetatable(DenoNeotestAdapter, {
 			config.get_dap_adapter = opts.dap_adapter
 		elseif opts.dap_adapter then
 			config.get_dap_adapter = function()
+				---@type string
 				return opts.dap_adapter
 			end
 		end

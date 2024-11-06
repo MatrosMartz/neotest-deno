@@ -75,7 +75,71 @@ with the `typescript` parser installed.
 
 ## Configuration
 
-TODO
+```lua
+{
+  "nvim-neotest/neotest",
+  dependencies = {
+    ...,
+    "markemmons/neotest-deno",
+  },
+  config = function()
+    require("neotest").setup({
+      ...,
+      adapters = {
+        require("neotest-deno") {
+          get_additional_filter_dir = {"node_modules"},
+        }
+      }
+    })
+  end,
+}
+```
+
+### Set additional arguments
+
+Use `args` to add arguments to the command.
+
+```lua
+---@type table<string, string> | fun(): table<string, string>
+args = { "--parallel" }
+```
+
+### Set permissions
+
+Use `allow` to define permissions.
+
+```lua
+---@type table<string, string> | fun(): table<string, string>
+allow = { "--allow-read", "--allow-env" }
+```
+
+### Set additional root files
+
+Use `root_files` to add root files.
+
+```lua
+---@type table<string,string> | fun(): table<string, string>
+root_files = { "jsr.json", "jsr.jsonc" }
+```
+
+### Filter directories
+
+Use `filter_dirs` to limit search directories.
+
+```lua
+---@type table<string, string> | fun(): table<string, string>
+filter_dirs = { "node_modules" }
+```
+
+### Set DAP adapter
+
+Use `dap_adapter` to change DAP adapter. See
+[Adapters](https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation#javascript-deno).
+
+```lua
+---@type string
+dap_adapter = "pwa-node"
+```
 
 ## Test Support
 
