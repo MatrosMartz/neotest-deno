@@ -1,10 +1,11 @@
 # neotest-deno
 
-A [neotest](https://github.com/rcarriga/neotest) adapter for [deno](https://deno.land/).
+A [neotest](https://github.com/rcarriga/neotest) adapter for
+[deno](https://deno.land/).
 
 WIP
 
-![neotest-deno](https://user-images.githubusercontent.com/21696951/206565569-3d7b6489-da56-42e3-bf72-9b2599dc3a30.gif)
+![neotest-deno1](https://user-images.githubusercontent.com/21696951/206565569-3d7b6489-da56-42e3-bf72-9b2599dc3a30.gif)
 
 ## Installation
 
@@ -50,7 +51,6 @@ Install and configure like any other neotest adapter:
 ### Packer
 
 ```lua
-
 use ({
   "nvim-neotest/neotest",
   requires= {
@@ -66,7 +66,8 @@ use ({
 })
 ```
 
-Requires [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter), with the `typescript` parser installed.
+Requires [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter),
+with the `typescript` parser installed.
 
 ```
 :TSIntall typescript
@@ -86,7 +87,7 @@ TODO
 - [x] Sinon.JS
 - [x] fast-check
 - [ ] Documentation tests
-- [x] jest expect
+- [x] @std/expect
 
 ## DAP Support
 
