@@ -9,7 +9,7 @@ WIP
 
 ## Installation
 
-Requires [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter).
+Requires [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter), with the `typescript` parser installed.
 
 Install and configure like any other neotest adapter:
 
