@@ -116,6 +116,7 @@ describe("DenoNeotestAdapter.discover_positions", function()
 				{ name = "hello world #5", type = "test" },
 				{ name = "helloWorld6", type = "test" },
 				{ name = "hello world #7", type = "test" },
+				{ name = 'add "${b}" to "${a}"', type = "test" },
 			},
 		}
 
@@ -290,6 +291,7 @@ describe("DenoNeotestAdapter.build_spec", function()
 		assert.contains(command, "/^hello world #1$/")
 		assert.is.truthy(spec.context.position.path)
 		assert.is.truthy(spec.context.results_path)
+		assert.is.truthy(spec.context.get_result_key)
 	end)
 
 	async.it("build command for subtest", function()
@@ -383,10 +385,13 @@ end)
 
 describe("DenoNeotestAdapter.results", function()
 	async.it("parses test suites successfully", function()
-		local test_cwd = vim.fn.getcwd() .. "/samples/1.tests.test.ts::"
+		local test_cwd = vim.fn.getcwd() .. "/samples/1.tests.test.ts"
+		local tree = neotest_deno.discover_positions(test_cwd)
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.1.tests",
+				---@cast tree neotest.Tree
+				get_result_key = utils.create_get_result_key(tree),
 			},
 			cwd = vim.fn.getcwd(),
 		})
@@ -399,17 +404,18 @@ describe("DenoNeotestAdapter.results", function()
 			"helloWorld3",
 			"hello world #7",
 		}
-		local failing = { "hello world #4", "hello world #5", "helloWorld6" }
+		local failing = { "hello world #4", "hello world #5", "helloWorld6", 'add "${b}" to "${a}"' }
 
 		for _, pass in pairs(passing) do
-			local result = results[test_cwd .. pass]
+			local result = results[test_cwd .. "::" .. pass]
 			assert.is.truthy(result)
 			assert.equals(result.status, "passed")
 			assert.is.Nil(result.short)
 		end
 
 		for _, fail in pairs(failing) do
-			local result = results[test_cwd .. fail]
+			local result = results[test_cwd .. "::" .. fail]
+			assert.is.truthy(result)
 			assert.equals(result.status, "failed")
 			assert.is.Nil(result.short)
 		end
@@ -420,6 +426,9 @@ describe("DenoNeotestAdapter.results", function()
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.9.deno_nested",
+				get_result_key = function(test_suit, test_name)
+					return test_suit .. test_name
+				end,
 			},
 			cwd = vim.fn.getcwd(),
 		})
@@ -446,6 +455,9 @@ describe("DenoNeotestAdapter.results", function()
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.4.bdd_nested",
+				get_result_key = function(test_suit, test_name)
+					return test_suit .. test_name
+				end,
 			},
 			cwd = vim.fn.getcwd(),
 		})
@@ -481,6 +493,9 @@ describe("DenoNeotestAdapter.results", function()
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.5.bdd_flat",
+				get_result_key = function(test_suit, test_name)
+					return test_suit .. test_name
+				end,
 			},
 			cwd = vim.fn.getcwd(),
 		})
@@ -507,6 +522,9 @@ describe("DenoNeotestAdapter.results", function()
 		local results = neotest_deno.results({
 			context = {
 				results_path = "./samples/.results.1.tests.filter",
+				get_result_key = function(test_suit, test_name)
+					return test_suit .. test_name
+				end,
 			},
 			cwd = vim.fn.getcwd(),
 		})

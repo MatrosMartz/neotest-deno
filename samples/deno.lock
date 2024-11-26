@@ -2,9 +2,11 @@
   "version": "4",
   "specifiers": {
     "jsr:@std/assert@^1.0.7": "1.0.7",
+    "jsr:@std/assert@^1.0.8": "1.0.8",
     "jsr:@std/expect@1.0.7": "1.0.7",
     "jsr:@std/expect@^1.0.7": "1.0.7",
     "jsr:@std/internal@^1.0.5": "1.0.5",
+    "jsr:@std/testing@^1.0.5": "1.0.5",
     "npm:@types/chai@*": "4.3.9",
     "npm:@types/chai@4.3.9": "4.3.9",
     "npm:@types/jest@*": "29.5.12",
@@ -27,15 +29,28 @@
         "jsr:@std/internal"
       ]
     },
+    "@std/assert@1.0.8": {
+      "integrity": "ebe0bd7eb488ee39686f77003992f389a06c3da1bbd8022184804852b2fa641b",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
     "@std/expect@1.0.7": {
       "integrity": "3904afa77cfe5c45dd2cd2c476e6fc5b6f57103d712890f0783d74c19d4b05a9",
       "dependencies": [
-        "jsr:@std/assert",
+        "jsr:@std/assert@^1.0.7",
         "jsr:@std/internal"
       ]
     },
     "@std/internal@1.0.5": {
       "integrity": "54a546004f769c1ac9e025abd15a76b6671ddc9687e2313b67376125650dc7ba"
+    },
+    "@std/testing@1.0.5": {
+      "integrity": "6e693cbec94c81a1ad3df668685c7ba8e20742bb10305bc7137faa5cf16d2ec4",
+      "dependencies": [
+        "jsr:@std/assert@^1.0.8",
+        "jsr:@std/internal"
+      ]
     }
   },
   "npm": {
@@ -2180,7 +2195,7 @@
       "jsr:@std/assert@^1.0.7",
       "jsr:@std/async@^1.0.7",
       "jsr:@std/expect@^1.0.7",
-      "jsr:@std/testing@^1.0.7"
+      "jsr:@std/testing@^1.0.5"
     ]
   }
 }

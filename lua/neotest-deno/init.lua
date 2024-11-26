@@ -106,6 +106,45 @@ function DenoNeotestAdapter.is_test_file(file_path)
 	return false
 end
 
+---@param captured_notes table<string, userdata>
+---@return string | nil
+local function get_match_type(captured_notes)
+	if captured_notes["test.name"] then
+		return "test"
+	end
+
+	if captured_notes["namespace.name"] then
+		return "namespace"
+	end
+end
+
+---@param file_path string
+---@param source string
+---@param captured_nodes table<string, userdata>
+---@return neotest.Position | neotest.Position[] | nil
+function DenoNeotestAdapter.build_positions(file_path, source, captured_nodes)
+	local match_type = get_match_type(captured_nodes)
+	if not match_type then
+		return
+	end
+
+	local name = vim.treesitter.get_node_text(captured_nodes[match_type .. ".name"], source)
+	local definition = captured_nodes[match_type .. ".definition"]
+	local is_parameterized = captured_nodes["parameterized"] and true or false
+
+	if is_parameterized then
+		name = name:sub(2, #name - 1)
+	end
+
+	return {
+		type = match_type,
+		path = file_path,
+		name = name,
+		range = { definition:range() },
+		is_parameterized = is_parameterized,
+	}
+end
+
 ---Given a file path, parse all the tests within it.
 ---@async
 ---@param file_path string Absolute file path
@@ -136,11 +175,15 @@ function DenoNeotestAdapter.discover_positions(file_path)
               )
             ]
             arguments: [
+              (arguments . (template_string) @test.name @parameterized . (object)? . [(arrow_function) (function_expression)])
               (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
               (arguments . (object)? . (function_expression name: (identifier) @test.name))
               (arguments . (object (pair
                 key: (property_identifier) @key (#eq? @key "name")
-                value: (string (string_fragment) @test.name)
+                value: [
+                  (string (string_fragment) @test.name)
+                  (template_string) @test.name @parameterized
+                ]
               )))
             ]
           )))
@@ -151,11 +194,15 @@ function DenoNeotestAdapter.discover_positions(file_path)
                 property: (property_identifier) @test_step (#eq? @test_step "step")
               )
               arguments: [
+                (arguments . (template_string) @test.name @parameterized . (object)? . [(arrow_function) (function_expression)])
                 (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
                 (arguments . (object)? . (function_expression name: (identifier) @test.name))
                 (arguments . (object (pair
                   key: (property_identifier) @key (#eq? @key "name")
-                  value: (string (string_fragment) @test.name)
+                  value: [
+                    (string (string_fragment) @test.name)
+                    (template_string) @test.name @parameterized
+                  ]
                 )))
               ]
             ))
@@ -189,6 +236,7 @@ function DenoNeotestAdapter.discover_positions(file_path)
                 )
               ]
               arguments: [
+                (arguments . (template_string) @test.name @parameterized . (object)? . [(arrow_function) (function_expression)])
                 (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
                 (arguments . (object)? . (function_expression name: (identifier) @test.name))
                 (arguments . (object (pair
@@ -208,7 +256,10 @@ function DenoNeotestAdapter.discover_positions(file_path)
                   (arguments . (object)? . (function_expression name: (identifier) @test.name))
                   (arguments . (object (pair
                     key: (property_identifier) @key (#eq? @key "name")
-                    value: (string (string_fragment) @test.name)
+                    value: [
+                      (string (string_fragment) @test.name)
+                      (template_string) @test.name @parameterized
+                    ]
                   )))
                 ]
               ))
@@ -241,6 +292,7 @@ function DenoNeotestAdapter.discover_positions(file_path)
               )
             ]
             arguments: [
+              (arguments . (template_string) @test.name @parameterized . (object)? . [(arrow_function) (function_expression)])
               (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)])
               (arguments . (object)? . (function_expression name: (identifier) @test.name))
               (arguments . (object (pair
@@ -260,7 +312,10 @@ function DenoNeotestAdapter.discover_positions(file_path)
                 (arguments . (object)? . (function_expression name: (identifier) @test.name))
                 (arguments . (object (pair
                   key: (property_identifier) @key (#eq? @key "name")
-                  value: (string (string_fragment) @test.name)
+                  value: [
+                    (string (string_fragment) @test.name)
+                    (template_string) @test.name @parameterized
+                  ]
                 )))
               ]
             ))
@@ -274,6 +329,9 @@ function DenoNeotestAdapter.discover_positions(file_path)
   ((call_expression
     function: (member_expression) @deno_test (#any-of? @deno_test "Deno.test" "Deno.test.ignore" "Deno.test.only")
     arguments: [
+      ; Matches: `Deno.test(`name`, () => {})`
+      ; Matches: `Deno.test(`name`, { opts }, () => {})`
+      (arguments . (template_string) @test.name @parameterized . (object)? . [(arrow_function) (function_expression)] .)
       ; Matches: `Deno.test("name", () => {})`
       ; Matches: `Deno.test("name", { opts }, () => {})`
       (arguments . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)] .)
@@ -281,10 +339,14 @@ function DenoNeotestAdapter.discover_positions(file_path)
       ; Matches: `Deno.test({ opts }, function name() {})`
       (arguments . (object)? . (function_expression name: (identifier) @test.name) .)
       ; Matches `Deno.test({name: "name", fn: () => {} })`
+      ; Matches `Deno.test({name: `name`, fn: () => {} })`
       (arguments . (object (pair
         key: (property_identifier) @key (#eq? @key "name")
-        value: (string (string_fragment) @test.name))
-      ))
+        value: [
+          (string (string_fragment) @test.name)
+          (template_string) @test.name @parameterized
+        ]
+      )))
     ]
   )) @test.definition
   ]]
@@ -296,11 +358,15 @@ function DenoNeotestAdapter.discover_positions(file_path)
       ((_) @func_name (#any-of? @func_name "describe.only" "describe.ignore" "describe"))
     ]
     arguments: [
+      (arguments . ((template_string) @namespace.name @parameterized . (object)? . [(arrow_function) (function_expression)]))
       (arguments . ((string (string_fragment) @namespace.name ) . (object)? . [(arrow_function) (function_expression)]))
       (arguments . (object)? . (function_expression name: (identifier) @namespace.name) .)
       (arguments . (object (pair
         key: (property_identifier) @key (#eq? @key "name")
-        value: (string (string_fragment) @namespace.name)
+        value: [
+          (string (string_fragment) @namespace.name)
+          (template_string) @namespace.name @parameterized
+        ]
       )).)
     ]
   ) @namespace.definition
@@ -310,6 +376,7 @@ function DenoNeotestAdapter.discover_positions(file_path)
     function:
     	((_) @func_name (#any-of? @func_name "it" "test" "it.only" "it.ignore" "test.only" "test.ignore"))
     arguments: [
+      (arguments . (identifier)? . (template_string) @test.name @parameterized . (object)? . [(arrow_function) (function_expression)] .)
       ; Matches: `it("name", () => {})`
       ; Matches: `it("name", { opts }, () => {})`
       (arguments . (identifier)? . (string (string_fragment) @test.name) . (object)? . [(arrow_function) (function_expression)] .)
@@ -327,7 +394,11 @@ function DenoNeotestAdapter.discover_positions(file_path)
 
 	local query = deno_test .. bdd
 
-	local position_tree = lib.treesitter.parse_positions(file_path, query, { nested_tests = true })
+	local position_tree = lib.treesitter.parse_positions(
+		file_path,
+		query,
+		{ nested_tests = true, build_position = DenoNeotestAdapter.build_positions }
+	)
 
 	return position_tree
 end
@@ -336,6 +407,7 @@ end
 ---@return nil | neotest.RunSpec | neotest.RunSpec[]
 function DenoNeotestAdapter.build_spec(args)
 	local results_path = utils.get_results_file()
+	local get_result_key = utils.create_get_result_key(args.tree)
 
 	if not args.tree then
 		return
@@ -349,6 +421,7 @@ function DenoNeotestAdapter.build_spec(args)
 	local command = vim.iter({
 		"deno",
 		"test",
+		-- "--reported=junit",
 		position.path,
 		"--no-prompt",
 		vim.list_extend(config.get_args(), args.extra_args or {}),
@@ -389,6 +462,7 @@ function DenoNeotestAdapter.build_spec(args)
 				"test",
 				"--allow-all",
 				"--inspect-wait",
+				-- "--reported=junit",
 			},
 			program = "${file}",
 			attachSimplePort = 9229,
@@ -400,6 +474,7 @@ function DenoNeotestAdapter.build_spec(args)
 		context = {
 			results_path = results_path,
 			position = position,
+			get_result_key = get_result_key,
 		},
 		cwd = cwd,
 		strategy = strategy,
@@ -416,6 +491,8 @@ function DenoNeotestAdapter.results(spec)
 	local results = {}
 	local test_suite = ""
 	local handle = assert(io.open(spec.context.results_path))
+	---@type fun(test_suit:string, test_name: string): string | nil
+	local get_result_key = spec.context.get_result_key
 	---@type string
 	local line = handle:read("l")
 
@@ -426,21 +503,34 @@ function DenoNeotestAdapter.results(spec)
 		if test_name and utils.ends_with(test_suite, "::" .. test_name .. "::") then
 			test_suite = test_suite:sub(1, -#test_name - 3)
 		end
+
+		---@type string |nil
+		local result_key = nil
+
+		if test_name then
+			result_key = get_result_key(test_suite, test_name)
+		end
+
 		-- Next test suite
 		if string.find(line, "running %d+ test") then
 			local testfile = line:match("running %d+ tests? from %.(.+%w+[sx]).-$")
 			test_suite = spec.cwd .. testfile .. "::"
 		-- Passed test
-		elseif line:find("%.%.%. .*ok") then
-			results[test_suite .. test_name] = { status = "passed" }
+		elseif line:find("%.%.%. .*ok") and result_key then
+			if not results[result_key] or results[result_key].status == "skipped" then
+				results[result_key] = { status = "passed" }
+			end
 
-		-- skipped test
-		elseif line:find("%.%.%. .*ignored") then
-			results[test_suite .. test_name] = { status = "skipped" }
+			-- skipped test
+		elseif line:find("%.%.%. .*ignored") and result_key then
+			if not results[result_key] then
+				results[result_key] = { status = "skipped" }
+			end
 
-		-- Failed test
-		elseif line:find("%.%.%. .*FAILED") then
-			results[test_suite .. test_name] = { status = "failed" }
+			-- Failed test
+		elseif line:find("%.%.%. .*FAILED") and result_key then
+			results[result_key] = { status = "failed" }
+
 		-- Add namespace to test_suite
 		elseif line:find("%.%.%.") and test_name then
 			test_suite = test_suite .. test_name .. "::"
